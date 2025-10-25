@@ -1,0 +1,324 @@
+def selection_sort_improved(arr):
+    """
+    Улучшенная сортировка выбором с подсчетом операций
+    """
+    operations = 0
+    comparisons = 0
+    n = len(arr)
+    
+    for i in range(n):
+        min_idx = i
+        for j in range(i + 1, n):
+            comparisons += 1
+            if arr[j] < arr[min_idx]:
+                min_idx = j
+                operations += 1
+        
+        if min_idx != i:
+            arr[i], arr[min_idx] = arr[min_idx], arr[i]
+            operations += 1
+    
+    return operations, comparisons
+
+def bubble_sort_optimized(arr):
+    """
+    Оптимизированная пузырьковая сортировка с флагом
+    """
+    operations = 0
+    comparisons = 0
+    n = len(arr)
+    
+    for i in range(n - 1):
+        swapped = False
+        for j in range(n - i - 1):
+            comparisons += 1
+            if arr[j] > arr[j + 1]:
+                arr[j], arr[j + 1] = arr[j + 1], arr[j]
+                operations += 1
+                swapped = True
+        
+        if not swapped:
+            break
+    
+    return operations, comparisons
+
+def insertion_sort_with_gap(arr, gap=1):
+    """
+    Сортировка вставками с возможностью задания шага
+    """
+    operations = 0
+    comparisons = 0
+    
+    for i in range(gap, len(arr)):
+        key = arr[i]
+        j = i - gap
+        
+        while j >= 0:
+            comparisons += 1
+            if arr[j] > key:
+                arr[j + gap] = arr[j]
+                operations += 1
+                j -= gap
+            else:
+                break
+        
+        arr[j + gap] = key
+        operations += 1
+    
+    return operations, comparisons
+
+def merge_sort_iterative(arr):
+    """
+    Итеративная версия сортировки слиянием
+    """
+    if len(arr) <= 1:
+        return 0, 0
+    
+    operations = 0
+    comparisons = 0
+    step = 1
+    n = len(arr)
+    
+    while step < n:
+        left = 0
+        while left < n:
+            mid = min(left + step, n)
+            right = min(left + 2 * step, n)
+            
+            left_arr = arr[left:mid]
+            right_arr = arr[mid:right]
+            
+            i = j = 0
+            k = left
+            
+            while i < len(left_arr) and j < len(right_arr):
+                comparisons += 1
+                if left_arr[i] <= right_arr[j]:
+                    arr[k] = left_arr[i]
+                    i += 1
+                else:
+                    arr[k] = right_arr[j]
+                    j += 1
+                k += 1
+                operations += 1
+            
+            while i < len(left_arr):
+                arr[k] = left_arr[i]
+                i += 1
+                k += 1
+                operations += 1
+            
+            while j < len(right_arr):
+                arr[k] = right_arr[j]
+                j += 1
+                k += 1
+                operations += 1
+            
+            left += 2 * step
+        step *= 2
+    
+    return operations, comparisons
+
+def shell_sort_custom(arr):
+    """
+    Сортировка Шелла с последовательностью Кнута
+    """
+    operations = 0
+    comparisons = 0
+    n = len(arr)
+    
+    gap = 1
+    while gap < n // 3:
+        gap = 3 * gap + 1
+    
+    while gap >= 1:
+        for i in range(gap, n):
+            temp = arr[i]
+            j = i
+            
+            while j >= gap:
+                comparisons += 1
+                if arr[j - gap] > temp:
+                    arr[j] = arr[j - gap]
+                    operations += 1
+                    j -= gap
+                else:
+                    break
+            
+            arr[j] = temp
+            operations += 1
+        
+        gap //= 3
+    
+    return operations, comparisons
+
+def quick_sort_median(arr, low=0, high=None):
+    """
+    Быстрая сортировка с медианным выбором опорного элемента
+    """
+    if high is None:
+        high = len(arr) - 1
+    
+    operations = [0]
+    comparisons = [0]
+    
+    def partition(low, high):
+        # Медиана трех для выбора опорного элемента
+        mid = (low + high) // 2
+        if arr[low] > arr[mid]:
+            arr[low], arr[mid] = arr[mid], arr[low]
+            operations[0] += 1
+        if arr[low] > arr[high]:
+            arr[low], arr[high] = arr[high], arr[low]
+            operations[0] += 1
+        if arr[mid] > arr[high]:
+            arr[mid], arr[high] = arr[high], arr[mid]
+            operations[0] += 1
+        
+        # Размещаем медиану в позиции high-1
+        arr[mid], arr[high-1] = arr[high-1], arr[mid]
+        operations[0] += 1
+        pivot = arr[high-1]
+        
+        i = low
+        for j in range(low, high-1):
+            comparisons[0] += 1
+            if arr[j] <= pivot:
+                arr[i], arr[j] = arr[j], arr[i]
+                operations[0] += 1
+                i += 1
+        
+        arr[i], arr[high-1] = arr[high-1], arr[i]
+        operations[0] += 1
+        return i
+    
+    if low < high:
+        if high - low > 10:  # Используем медиану для больших подмассивов
+            pi = partition(low, high)
+            quick_sort_median(arr, low, pi - 1)
+            quick_sort_median(arr, pi + 1, high)
+        else:  # Для маленьких используем сортировку вставками
+            ops, comps = insertion_sort_with_gap(arr[low:high+1])
+            operations[0] += ops
+            comparisons[0] += comps
+    
+    return operations[0], comparisons[0]
+
+def heap_sort_bottom_up(arr):
+    """
+    Пирамидальная сортировка с bottom-up построением кучи
+    """
+    operations = 0
+    comparisons = 0
+    
+    def sift_down(start, end):
+        nonlocal operations, comparisons
+        root = start
+        
+        while 2 * root + 1 <= end:
+            child = 2 * root + 1
+            swap = root
+            
+            comparisons += 1
+            if arr[swap] < arr[child]:
+                swap = child
+            
+            comparisons += 1
+            if child + 1 <= end and arr[swap] < arr[child + 1]:
+                swap = child + 1
+            
+            if swap == root:
+                return
+            else:
+                arr[root], arr[swap] = arr[swap], arr[root]
+                operations += 1
+                root = swap
+    
+    n = len(arr)
+    
+    # Bottom-up построение кучи
+    for start in range((n - 2) // 2, -1, -1):
+        sift_down(start, n - 1)
+    
+    for end in range(n - 1, 0, -1):
+        arr[end], arr[0] = arr[0], arr[end]
+        operations += 1
+        sift_down(0, end - 1)
+    
+    return operations, comparisons
+
+def analyze_performance():
+    """
+    Анализ производительности алгоритмов сортировки
+    """
+    import time
+    import random
+    
+    test_sizes = [10, 50, 100]
+    algorithms = [
+        ("Сортировка выбором", selection_sort_improved),
+        ("Пузырьковая сортировка", bubble_sort_optimized),
+        ("Сортировка вставками", insertion_sort_with_gap),
+        ("Итеративная сортировка слиянием", merge_sort_iterative),
+        ("Сортировка Шелла", shell_sort_custom),
+        ("Быстрая сортировка", quick_sort_median),
+        ("Пирамидальная сортировка", heap_sort_bottom_up),
+    ]
+    
+    print("АНАЛИЗ ПРОИЗВОДИТЕЛЬНОСТИ АЛГОРИТМОВ СОРТИРОВКИ")
+    print("=" * 70)
+    
+    for size in test_sizes:
+        print(f"\nРазмер массива: {size} элементов")
+        print("-" * 50)
+        
+        # Генерируем тестовые данные
+        test_data = [random.randint(1, 1000) for _ in range(size)]
+        
+        for name, algorithm in algorithms:
+            arr = test_data.copy()
+            
+            start_time = time.time()
+            operations, comparisons = algorithm(arr)
+            end_time = time.time()
+            
+            execution_time = (end_time - start_time) * 1000  # в миллисекундах
+            
+            print(f"{name:30} | Время: {execution_time:6.2f}ms | "
+                  f"Операции: {operations:4} | Сравнения: {comparisons:4}")
+
+if __name__ == "__main__":
+    # Основной тест
+    original = [64, 34, 25, 12, 22, 11, 90, 5, 77, 30]
+    
+    print("УЛУЧШЕННЫЕ АЛГОРИТМЫ СОРТИРОВКИ - САМОСТОЯТЕЛЬНАЯ РАБОТА")
+    print(f"Исходный массив: {original}")
+    print()
+    
+    algorithms = [
+        ("Сортировка выбором", selection_sort_improved),
+        ("Пузырьковая сортировка", bubble_sort_optimized),
+        ("Сортировка вставками", insertion_sort_with_gap),
+        ("Итеративная сортировка слиянием", merge_sort_iterative),
+        ("Сортировка Шелла", shell_sort_custom),
+        ("Быстрая сортировка", quick_sort_median),
+        ("Пирамидальная сортировка", heap_sort_bottom_up),
+    ]
+    
+    results = []
+    
+    for name, algorithm in algorithms:
+        arr = original.copy()
+        operations, comparisons = algorithm(arr)
+        results.append((name, arr.copy(), operations, comparisons))
+        print(f"{name:30} -> {arr}")
+        print(f"{'':30}   Операций: {operations}, Сравнений: {comparisons}")
+    
+    # Проверка корректности всех алгоритмов
+    print("\nПРОВЕРКА КОРРЕКТНОСТИ:")
+    sorted_arrays = [result[1] for result in results]
+    is_correct = all(arr == sorted(original) for arr in sorted_arrays)
+    print(f"Все алгоритмы работают корректно: {is_correct}")
+    
+    # Анализ производительности
+    analyze_performance()
