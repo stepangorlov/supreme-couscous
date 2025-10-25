@@ -1,0 +1,356 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <chrono>
+#include <random>
+using namespace std;
+
+struct SortResult {
+    int operations;
+    int comparisons;
+    double duration_ms;
+};
+
+void selectionSortEnhanced(vector<int>& arr, int& operations, int& comparisons) {
+    operations = 0;
+    comparisons = 0;
+    int n = arr.size();
+    
+    for (int i = 0; i < n - 1; i++) {
+        int minIndex = i;
+        for (int j = i + 1; j < n; j++) {
+            comparisons++;
+            if (arr[j] < arr[minIndex]) {
+                minIndex = j;
+                operations++;
+            }
+        }
+        if (minIndex != i) {
+            swap(arr[i], arr[minIndex]);
+            operations++;
+        }
+    }
+}
+
+void bubbleSortOptimized(vector<int>& arr, int& operations, int& comparisons) {
+    operations = 0;
+    comparisons = 0;
+    int n = arr.size();
+    bool swapped;
+    
+    for (int i = 0; i < n - 1; i++) {
+        swapped = false;
+        for (int j = 0; j < n - i - 1; j++) {
+            comparisons++;
+            if (arr[j] > arr[j + 1]) {
+                swap(arr[j], arr[j + 1]);
+                operations++;
+                swapped = true;
+            }
+        }
+        if (!swapped) break;
+    }
+}
+
+void insertionSortWithGap(vector<int>& arr, int gap, int& operations, int& comparisons) {
+    operations = 0;
+    comparisons = 0;
+    int n = arr.size();
+    
+    for (int i = gap; i < n; i++) {
+        int key = arr[i];
+        int j = i - gap;
+        
+        while (j >= 0) {
+            comparisons++;
+            if (arr[j] > key) {
+                arr[j + gap] = arr[j];
+                operations++;
+                j -= gap;
+            } else {
+                break;
+            }
+        }
+        arr[j + gap] = key;
+        operations++;
+    }
+}
+
+void mergeIterative(vector<int>& arr, int& operations, int& comparisons) {
+    operations = 0;
+    comparisons = 0;
+    int n = arr.size();
+    
+    for (int step = 1; step < n; step *= 2) {
+        for (int left = 0; left < n; left += 2 * step) {
+            int mid = min(left + step, n);
+            int right = min(left + 2 * step, n);
+            
+            vector<int> leftArr(arr.begin() + left, arr.begin() + mid);
+            vector<int> rightArr(arr.begin() + mid, arr.begin() + right);
+            
+            int i = 0, j = 0, k = left;
+            
+            while (i < leftArr.size() && j < rightArr.size()) {
+                comparisons++;
+                if (leftArr[i] <= rightArr[j]) {
+                    arr[k] = leftArr[i];
+                    i++;
+                } else {
+                    arr[k] = rightArr[j];
+                    j++;
+                }
+                k++;
+                operations++;
+            }
+            
+            while (i < leftArr.size()) {
+                arr[k] = leftArr[i];
+                i++;
+                k++;
+                operations++;
+            }
+            
+            while (j < rightArr.size()) {
+                arr[k] = rightArr[j];
+                j++;
+                k++;
+                operations++;
+            }
+        }
+    }
+}
+
+void shellSortKnuth(vector<int>& arr, int& operations, int& comparisons) {
+    operations = 0;
+    comparisons = 0;
+    int n = arr.size();
+    
+    int gap = 1;
+    while (gap < n / 3) {
+        gap = 3 * gap + 1;
+    }
+    
+    while (gap >= 1) {
+        for (int i = gap; i < n; i++) {
+            int temp = arr[i];
+            int j = i;
+            
+            while (j >= gap) {
+                comparisons++;
+                if (arr[j - gap] > temp) {
+                    arr[j] = arr[j - gap];
+                    operations++;
+                    j -= gap;
+                } else {
+                    break;
+                }
+            }
+            arr[j] = temp;
+            operations++;
+        }
+        gap /= 3;
+    }
+}
+
+int partitionMedian(vector<int>& arr, int low, int high, int& operations, int& comparisons) {
+    int mid = low + (high - low) / 2;
+    
+    if (arr[low] > arr[mid]) {
+        swap(arr[low], arr[mid]);
+        operations++;
+    }
+    if (arr[low] > arr[high]) {
+        swap(arr[low], arr[high]);
+        operations++;
+    }
+    if (arr[mid] > arr[high]) {
+        swap(arr[mid], arr[high]);
+        operations++;
+    }
+    
+    swap(arr[mid], arr[high - 1]);
+    operations++;
+    int pivot = arr[high - 1];
+    
+    int i = low;
+    for (int j = low; j < high - 1; j++) {
+        comparisons++;
+        if (arr[j] <= pivot) {
+            swap(arr[i], arr[j]);
+            operations++;
+            i++;
+        }
+    }
+    swap(arr[i], arr[high - 1]);
+    operations++;
+    return i;
+}
+
+void quickSortEnhanced(vector<int>& arr, int low, int high, int& operations, int& comparisons) {
+    if (low < high) {
+        if (high - low > 10) {
+            int pi = partitionMedian(arr, low, high, operations, comparisons);
+            quickSortEnhanced(arr, low, pi - 1, operations, comparisons);
+            quickSortEnhanced(arr, pi + 1, high, operations, comparisons);
+        } else {
+            insertionSortWithGap(arr, 1, operations, comparisons);
+        }
+    }
+}
+
+void siftDown(vector<int>& arr, int start, int end, int& operations, int& comparisons) {
+    int root = start;
+    
+    while (2 * root + 1 <= end) {
+        int child = 2 * root + 1;
+        int swapIdx = root;
+        
+        comparisons++;
+        if (arr[swapIdx] < arr[child]) {
+            swapIdx = child;
+        }
+        
+        comparisons++;
+        if (child + 1 <= end && arr[swapIdx] < arr[child + 1]) {
+            swapIdx = child + 1;
+        }
+        
+        if (swapIdx == root) {
+            return;
+        } else {
+            swap(arr[root], arr[swapIdx]);
+            operations++;
+            root = swapIdx;
+        }
+    }
+}
+
+void heapSortBottomUp(vector<int>& arr, int& operations, int& comparisons) {
+    operations = 0;
+    comparisons = 0;
+    int n = arr.size();
+    
+    for (int start = (n - 2) / 2; start >= 0; start--) {
+        siftDown(arr, start, n - 1, operations, comparisons);
+    }
+    
+    for (int end = n - 1; end > 0; end--) {
+        swap(arr[0], arr[end]);
+        operations++;
+        siftDown(arr, 0, end - 1, operations, comparisons);
+    }
+}
+
+SortResult measureSortPerformance(vector<int> arr, void (*sortFunc)(vector<int>&, int&, int&)) {
+    auto start = chrono::high_resolution_clock::now();
+    
+    int operations, comparisons;
+    sortFunc(arr, operations, comparisons);
+    
+    auto end = chrono::high_resolution_clock::now();
+    double duration = chrono::duration_cast<chrono::microseconds>(end - start).count() / 1000.0;
+    
+    return {operations, comparisons, duration};
+}
+
+void performanceAnalysis() {
+    cout << "\nАНАЛИЗ ПРОИЗВОДИТЕЛЬНОСТИ АЛГОРИТМОВ СОРТИРОВКИ" << endl;
+    cout << "==========================================================" << endl;
+    
+    vector<int> testSizes = {10, 50, 100};
+    vector<pair<string, void (*)(vector<int>&, int&, int&)>> algorithms = {
+        {"Сортировка выбором", selectionSortEnhanced},
+        {"Пузырьковая сортировка", bubbleSortOptimized},
+        {"Сортировка вставками", [](vector<int>& arr, int& op, int& comp) { 
+            insertionSortWithGap(arr, 1, op, comp); 
+        }},
+        {"Итеративная сортировка слиянием", mergeIterative},
+        {"Сортировка Шелла", shellSortKnuth},
+        {"Быстрая сортировка", [](vector<int>& arr, int& op, int& comp) { 
+            quickSortEnhanced(arr, 0, arr.size() - 1, op, comp); 
+        }},
+        {"Пирамидальная сортировка", heapSortBottomUp}
+    };
+    
+    random_device rd;
+    mt19937 gen(rd());
+    
+    for (int size : testSizes) {
+        cout << "\nРазмер массива: " << size << " элементов" << endl;
+        cout << "----------------------------------------------------------" << endl;
+        
+        vector<int> testData(size);
+        uniform_int_distribution<> dis(1, 1000);
+        generate(testData.begin(), testData.end(), [&]() { return dis(gen); });
+        
+        for (const auto& [name, algorithm] : algorithms) {
+            SortResult result = measureSortPerformance(testData, algorithm);
+            cout << name << " | ";
+            cout << "Время: " << result.duration_ms << "ms | ";
+            cout << "Операции: " << result.operations << " | ";
+            cout << "Сравнения: " << result.comparisons << endl;
+        }
+    }
+}
+
+int main() {
+    vector<int> original = {64, 34, 25, 12, 22, 11, 90, 5, 77, 30};
+    
+    cout << "УЛУЧШЕННЫЕ АЛГОРИТМЫ СОРТИРОВКИ НА C++" << endl;
+    cout << "Исходный массив: ";
+    for (int num : original) cout << num << " ";
+    cout << endl << endl;
+    
+    vector<pair<string, void (*)(vector<int>&, int&, int&)>> algorithms = {
+        {"Сортировка выбором", selectionSortEnhanced},
+        {"Пузырьковая сортировка", bubbleSortOptimized},
+        {"Сортировка вставками", [](vector<int>& arr, int& op, int& comp) { 
+            insertionSortWithGap(arr, 1, op, comp); 
+        }},
+        {"Итеративная сортировка слиянием", mergeIterative},
+        {"Сортировка Шелла", shellSortKnuth},
+        {"Быстрая сортировка", [](vector<int>& arr, int& op, int& comp) { 
+            quickSortEnhanced(arr, 0, arr.size() - 1, op, comp); 
+        }},
+        {"Пирамидальная сортировка", heapSortBottomUp}
+    };
+    
+    vector<vector<int>> results;
+    
+    for (const auto& [name, algorithm] : algorithms) {
+        vector<int> arr = original;
+        int operations, comparisons;
+        
+        auto start = chrono::high_resolution_clock::now();
+        algorithm(arr, operations, comparisons);
+        auto end = chrono::high_resolution_clock::now();
+        double duration = chrono::duration_cast<chrono::microseconds>(end - start).count() / 1000.0;
+        
+        results.push_back(arr);
+        
+        cout << name << ": ";
+        for (int num : arr) cout << num << " ";
+        cout << endl;
+        cout << "  Операций: " << operations << ", Сравнений: " << comparisons;
+        cout << ", Время: " << duration << "ms" << endl << endl;
+    }
+    
+    bool allCorrect = true;
+    vector<int> sortedOriginal = original;
+    sort(sortedOriginal.begin(), sortedOriginal.end());
+    
+    for (const auto& result : results) {
+        if (result != sortedOriginal) {
+            allCorrect = false;
+            break;
+        }
+    }
+    
+    cout << "ПРОВЕРКА КОРРЕКТНОСТИ: ";
+    cout << (allCorrect ? "Все алгоритмы работают корректно" : "Обнаружены ошибки") << endl;
+    
+    performanceAnalysis();
+    
+    return 0;
+}
